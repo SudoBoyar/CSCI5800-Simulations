@@ -2,8 +2,7 @@ import abc
 import random
 
 
-@abc.ABCMeta
-class DistributionGenerator(object):
+class DistributionGenerator(metaclass=abc.ABCMeta):
     def __init__(self, total=None, seed=0, source=None):
         self.index = total
         self.source = source if isinstance(source, random.Random) else random.Random(seed)
@@ -44,7 +43,7 @@ class Flat(DistributionGenerator):
         self.b = b
 
     def next(self):
-        return self.source.uniform(self.lambd)
+        return self.source.uniform(self.a, self.b)
 
 
 class Normal(DistributionGenerator):
@@ -54,7 +53,7 @@ class Normal(DistributionGenerator):
         self.sigma = sigma
 
     def next(self):
-        return self.source.normalvariate(self.lambd)
+        return self.source.normalvariate(self.mu, self.sigma)
 
 
 if __name__ == '__main__':
