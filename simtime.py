@@ -1,5 +1,5 @@
 def seconds(n):
-    return float(n)
+    return n
 
 
 def minutes(n):
