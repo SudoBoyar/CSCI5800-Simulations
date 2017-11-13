@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+
 def seconds(n):
     return n
 
@@ -12,3 +15,8 @@ def hours(n):
 
 def days(n):
     return n * 60 * 60 * 24
+
+
+def pretty_time(t):
+    delta = timedelta(seconds=t)
+    return str(delta)
