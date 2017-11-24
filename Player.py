@@ -32,6 +32,7 @@ class Player(object):
             self.t_seated = env.now
             wait = self.t_seated - self.t_arrival
             print(self, " took a spot at the table. Waited ", pretty_time(wait))
+            self.table.add_player(self)
             env.process(self.play(env))
         else:
             spot_request.cancel()
@@ -43,7 +44,7 @@ class Player(object):
         self.t_departure = env.now
         played = self.t_departure - self.t_seated
         self.table.spots.release(self.spot)
-        print(self.table.spots.count)
+        self.table.remove_player(self)
         print(self, " departed at ", pretty_time(env.now), " after playing ", pretty_time(played))
 
     def shoot(self, env):
