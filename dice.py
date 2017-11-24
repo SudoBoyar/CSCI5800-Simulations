@@ -34,7 +34,7 @@ class Roll(object):
         return self.roll == other.roll
 
     def __str__(self):
-        return "Roll(" + ', '.join(self.roll) + ")"
+        return "Roll(" + ', '.join(map(str, self.roll)) + ")"
 
     def __iter__(self):
         return iter(self.roll)
