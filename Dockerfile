@@ -1,5 +1,5 @@
 FROM jupyter/scipy-notebook
 WORKDIR /home/jovyan/work
-RUN pip install simpy
+RUN pip install simpy PyQt5
 ADD . /home/jovyan/work
-CMD ["tini", "--", "start-notebook.sh"]
+CMD ["python", "craps.py"]
