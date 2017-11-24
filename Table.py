@@ -1,12 +1,13 @@
 import random
 import simpy
+import simtime as st
 
 
 class Table(object):
     side_target = 200.00
     box_target = 1000.00
 
-    def __init__(self, env, dice, scale=1):
+    def __init__(self, env, dice, capacity=12, scale=1):
         """
 
         :param simpy.Environment env:
@@ -22,7 +23,10 @@ class Table(object):
         self.point = None
         self.available_bets = []
 
-        self.spots = simpy.Resource(env, capacity=12)
+        self.capacity = capacity
+        self.spots = simpy.Resource(env, capacity=capacity)
+        self.players = [None for _ in range(capacity)]
+        self.player_seats = {}
 
         self.left_dealer = simpy.Resource(env, capacity=1)
         self.left_stack = simpy.Container(env, capacity=float('inf'))
@@ -59,22 +63,30 @@ class Table(object):
                 # get amount from vault
 
     def add_player(self, player):
-        if len(self.left_players) == 6:
-            self.right_players.append(player.id)
-        elif len(self.right_players) == 6:
-            self.left_players.append(player.id)
-        else:
-            if self.player_placer.randint(0, 1) == 0:
-                self.left_players.append(player.id)
-            else:
-                self.right_players.append(player.id)
+        available = [k for k, v in enumerate(self.players) if v is None]
+        if len(available) == 0:
+            raise RuntimeError('Table already full...')
+
+        seat = available[self.player_placer.randint(0, len(available) - 1)]
+        self.players[seat] = player
+        self.player_seats[player.id] = seat
+
+        if self.spots.count == 1:
+            self.env.process(self.dummy_roll())
+
+    def remove_player(self, player):
+        seat = self.player_seats.pop(player.id)
+        self.players[seat] = None
 
     def bet_request(self, player):
-        if player.id in self.left_players:
+        if self.player_seats[player.id] < self.capacity/2:
             return self.left_dealer.request()
-        elif player.id in self.right_players:
+        elif self.capacity/2 <= self.player_seats[player.id] < self.capacity:
             return self.right_dealer.request()
         else:
-            # TODO Error Type
-            raise ConnectionRefusedError()
+            raise RuntimeError('Player sat at nonexistent seat')
 
+    def dummy_roll(self):
+        while self.spots.count > 0:
+            yield self.env.timeout(st.seconds(30))
+            self.dice.roll()
