@@ -30,6 +30,9 @@ class Roll(object):
         else:
             raise Exception('Invalid Roll')
 
+    def __int__(self):
+        return self.total
+
     def __eq__(self, other):
         if isinstance(other, Roll):
             # Comparing Roll instances
@@ -40,6 +43,76 @@ class Roll(object):
         elif isinstance(other, list) and len(other) == len(self.roll):
             # Comparing to a list (i.e. a specific roll)
             return self.roll == sorted(other)
+        else:
+            # Dunno
+            return False
+
+    def __gt__(self, other):
+        if isinstance(other, Roll):
+            # Comparing Roll instances
+            return self.roll > other.roll
+        elif isinstance(other, int):
+            # Comparing to an int (i.e. a total)
+            return self.total > other
+        elif isinstance(other, list) and len(other) == len(self.roll):
+            # Comparing to a list (i.e. a specific roll)
+            return self.roll > sorted(other)
+        else:
+            # Dunno
+            return False
+
+    def __ge__(self, other):
+        if isinstance(other, Roll):
+            # Comparing Roll instances
+            return self.roll >= other.roll
+        elif isinstance(other, int):
+            # Comparing to an int (i.e. a total)
+            return self.total >= other
+        elif isinstance(other, list) and len(other) == len(self.roll):
+            # Comparing to a list (i.e. a specific roll)
+            return self.roll >= sorted(other)
+        else:
+            # Dunno
+            return False
+
+    def __lt__(self, other):
+        if isinstance(other, Roll):
+            # Comparing Roll instances
+            return self.roll < other.roll
+        elif isinstance(other, int):
+            # Comparing to an int (i.e. a total)
+            return self.total < other
+        elif isinstance(other, list) and len(other) == len(self.roll):
+            # Comparing to a list (i.e. a specific roll)
+            return self.roll < sorted(other)
+        else:
+            # Dunno
+            return False
+
+    def __le__(self, other):
+        if isinstance(other, Roll):
+            # Comparing Roll instances
+            return self.roll <= other.roll
+        elif isinstance(other, int):
+            # Comparing to an int (i.e. a total)
+            return self.total <= other
+        elif isinstance(other, list) and len(other) == len(self.roll):
+            # Comparing to a list (i.e. a specific roll)
+            return self.roll <= sorted(other)
+        else:
+            # Dunno
+            return False
+
+    def __ne__(self, other):
+        if isinstance(other, Roll):
+            # Comparing Roll instances
+            return not self.roll == other.roll
+        elif isinstance(other, int):
+            # Comparing to an int (i.e. a total)
+            return not self.total == other
+        elif isinstance(other, list) and len(other) == len(self.roll):
+            # Comparing to a list (i.e. a specific roll)
+            return not self.roll == sorted(other)
         else:
             # Dunno
             return False
