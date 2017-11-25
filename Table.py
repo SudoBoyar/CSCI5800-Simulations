@@ -49,6 +49,9 @@ class Table(object):
         self.point_down_event = self.env.event()
         self.new_player_event = self.env.event()
 
+    def has_point(self):
+        return self.point is not None
+
     def table_accounting(self):
         while True:
             yield self.env.timeout(60*60)
