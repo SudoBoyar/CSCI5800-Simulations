@@ -101,8 +101,8 @@ class PointBet(Bet):
 
 
 class FieldBet(PointBet):
-    def __init__(self):
-        super(FieldBet, self).__init__('Field', Odds(5, 4), Payout(1, 1), [2, 3, 4, 9, 10, 11, 12], [5, 6, 7, 8])
+    def __init__(self, table):
+        super(FieldBet, self).__init__(table, 'Field', Odds(5, 4), Payout(1, 1), [2, 3, 4, 9, 10, 11, 12], [5, 6, 7, 8])
         self.payout_2_12 = Payout(2, 1)
 
     def handle_payout(self, roll, table):
@@ -113,8 +113,8 @@ class FieldBet(PointBet):
 
 
 class AllBet(PropBet):
-    def __init__(self):
-        super(AllBet, self).__init__("Make 'em all", Odds(190, 1), Payout(175, 1), losing_rolls=[7])
+    def __init__(self, table):
+        super(AllBet, self).__init__(table, "Make 'em all", Odds(190, 1), Payout(175, 1), losing_rolls=[7])
         self.seen = [False for _ in range(13)]
         self.required = [i not in (0, 1, 7) for i in range(13)]
 
@@ -128,8 +128,8 @@ class AllBet(PropBet):
 
 
 class TallBet(PropBet):
-    def __init__(self):
-        super(TallBet, self).__init__("All Tall", Odds(190, 1), Payout(175, 1), losing_rolls=[7])
+    def __init__(self, table):
+        super(TallBet, self).__init__(table, "All Tall", Odds(190, 1), Payout(175, 1), losing_rolls=[7])
         self.seen = [False for _ in range(8, 13)]
 
     def is_hit(self, roll, table):
@@ -144,8 +144,8 @@ class TallBet(PropBet):
 
 
 class SmallBet(PropBet):
-    def __init__(self):
-        super(SmallBet, self).__init__("All Small", Odds(190, 1), Payout(175, 1), losing_rolls=[7])
+    def __init__(self, table):
+        super(SmallBet, self).__init__(table, "All Small", Odds(190, 1), Payout(175, 1), losing_rolls=[7])
         self.seen = [False for _ in range(2, 7)]
 
     def is_hit(self, roll, table):
