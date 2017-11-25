@@ -6,8 +6,8 @@ import simpy
 
 from simtime import hours as simhours, minutes as simminutes
 from dice import Dice
-from Player import Player
-from Table import Table
+from player import Player
+from table import Table
 
 env = None
 dice_distributions = {

@@ -1,13 +1,14 @@
 import random
 import simpy
 import simtime as st
+import table_layouts
 
 
 class Table(object):
     side_target = 200.00
     box_target = 1000.00
 
-    def __init__(self, env, dice, bets, capacity=12, scale=1):
+    def __init__(self, env, dice, capacity=12, scale=1):
         self.env = env
 
         self.stack_default = self.side_target * scale
@@ -17,7 +18,7 @@ class Table(object):
         self.point = None
         self.roll_event = self.env.event()
 
-        self.bets = bets
+        self.bets = table_layouts.bets(self)
 
         self.capacity = capacity
         self.spots = simpy.Resource(env, capacity=capacity)
