@@ -31,7 +31,18 @@ class Roll(object):
             raise Exception('Invalid Roll')
 
     def __eq__(self, other):
-        return self.roll == other.roll
+        if isinstance(other, Roll):
+            # Comparing Roll instances
+            return self.roll == other.roll
+        elif isinstance(other, int):
+            # Comparing to an int (i.e. a total)
+            return self.total == other
+        elif isinstance(other, list) and len(other) == len(self.roll):
+            # Comparing to a list (i.e. a specific roll)
+            return self.roll == sorted(other)
+        else:
+            # Dunno
+            return False
 
     def __str__(self):
         return "Roll(" + ', '.join(map(str, self.roll)) + ")"
