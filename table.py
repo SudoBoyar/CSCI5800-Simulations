@@ -7,13 +7,7 @@ class Table(object):
     side_target = 200.00
     box_target = 1000.00
 
-    def __init__(self, env, dice, capacity=12, scale=1):
-        """
-
-        :param simpy.Environment env:
-        :param dice:
-        :param scale:
-        """
+    def __init__(self, env, dice, bets, capacity=12, scale=1):
         self.env = env
 
         self.stack_default = self.side_target * scale
@@ -21,7 +15,9 @@ class Table(object):
 
         self.dice = dice
         self.point = None
-        self.available_bets = []
+        self.roll_event = self.env.event()
+
+        self.bets = bets
 
         self.capacity = capacity
         self.spots = simpy.Resource(env, capacity=capacity)
@@ -92,4 +88,13 @@ class Table(object):
     def dummy_roll(self):
         while self.spots.count > 0:
             yield self.env.timeout(st.seconds(30))
-            self.dice.roll()
+            roll = self.dice.roll()
+            self.roll_event.success(roll)
+            self.roll_event = self.env.event()
+
+            if self.has_point():
+                if roll == 7:
+                    self.point = None
+            elif not self.has_point():
+                if roll in [4, 5, 6, 8, 9, 10]:
+                    self.point = roll.total
