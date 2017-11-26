@@ -25,5 +25,8 @@ class Payout(Odds):
     def __str__(self):
         return "%d:%d payout"
 
+    def __call__(self, *args, **kwargs):
+        return self.amount(*args)
+
     def amount(self, bet):
         return bet * self.fraction
