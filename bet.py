@@ -18,7 +18,18 @@ class Bet(object):
         self.hit_intervals = []
         self.since_last_hit = 0
 
-    def handle_roll(self, roll):
+        self.table.env.process(self.handle_roll(self.table.next_roll_event))
+
+    def handle_roll(self, roll_event):
+        yield roll_event
+
+        if self.table.next_roll_event is not None:
+            self.table.env.process(self.handle_roll(self.table.next_roll_event))
+
+        roll = roll_event.value
+        if roll is None or isinstance(roll, Exception):
+            return
+
         if not self.is_active():
             return
 
@@ -100,6 +111,15 @@ class PointBet(Bet):
         return self.table.has_point()
 
 
+class PlaceBet(PointBet):
+    """
+    One of [4-10] - [7], can't bet on it when that number is the point
+    """
+    
+    def is_active(self):
+        return self.table.point not in self.winning_rolls and super(PlaceBet, self).is_active()
+
+
 class FieldBet(PointBet):
     def __init__(self, table):
         super(FieldBet, self).__init__(table, 'Field', Odds(5, 4), Payout(1, 1), [2, 3, 4, 9, 10, 11, 12], [5, 6, 7, 8])
@@ -109,7 +129,7 @@ class FieldBet(PointBet):
         if roll in [2, 12]:
             self.paid += self.payout_2_12.amount(1.0)
         else:
-            self.paid += self.payout(1.0)
+            self.paid += self.payout.amount(1.0)
 
 
 class AllBet(PropBet):
