@@ -1,5 +1,6 @@
 import random
 import simpy
+
 import simtime as st
 import table_layouts
 
@@ -16,7 +17,8 @@ class Table(object):
 
         self.dice = dice
         self.point = None
-        self.roll_event = self.env.event()
+        self.roll_event = None
+        self.next_roll_event = self.env.event()
 
         self.bets = table_layouts.bets(self)
 
@@ -42,9 +44,6 @@ class Table(object):
         self.right_players = []
 
         self.transfers = []
-
-        self.point_down_event = self.env.event()
-        self.new_player_event = self.env.event()
 
     def has_point(self):
         return self.point is not None
@@ -90,12 +89,24 @@ class Table(object):
         while self.spots.count > 0:
             yield self.env.timeout(st.seconds(30))
             roll = self.dice.roll()
-            self.roll_event.success(roll)
-            self.roll_event = self.env.event()
 
-            if self.has_point():
-                if roll == 7:
-                    self.point = None
-            elif not self.has_point():
-                if roll in [4, 5, 6, 8, 9, 10]:
-                    self.point = roll.total
+            if self.spots.count > 0:
+                # double check just in case the last player left
+                self.roll_event = self.next_roll_event
+                self.next_roll_event = self.env.event()
+                self.roll_event.succeed(roll)
+
+                # We have to yield here to make sure the event actually gets processed before doing game status updates
+                # TODO Rewrite so not necessary?
+                yield self.env.timeout(0)
+
+                if self.has_point():
+                    if roll == 7 or roll == self.point:
+                        self.point = None
+                elif not self.has_point():
+                    if roll in [4, 5, 6, 8, 9, 10]:
+                        self.point = roll.total
+
+        self.roll_event = self.next_roll_event
+        self.next_roll_event = None
+        self.roll_event.succeed()
