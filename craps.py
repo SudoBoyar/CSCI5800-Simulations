@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import simpy
 
-from simtime import hours as simhours, minutes as simminutes
+import simtime as st
 from dice import Dice
 from game_stats import GameStats
 from player import Player
@@ -18,8 +18,10 @@ dice_distributions = {
     'very_heavy_3': [1, 1, 3, 1, 1, 1],
     'heavy_3_light_4': [2, 2, 3, 1, 2, 2],
     'very_heavy_3_light_4': [2, 2, 4, 1, 2, 2],
-    'heavy_corner': [2, 2, 2, 1, 1, 1],
-    'very_heavy_corner': [3, 3, 3, 1, 1, 1]
+    'heavy_low_corner': [1, 1, 1, 2, 2, 2],
+    'very_heavy_low_corner': [1, 1, 1, 3, 3, 3],
+    'heavy_high_corner': [2, 2, 2, 1, 1, 1],
+    'very_heavy_high_corner': [3, 3, 3, 1, 1, 1]
 }
 
 
@@ -27,26 +29,34 @@ def run():
     global env
 
     stats = {}
+    bets = {}
     for distr_name, distr in dice_distributions.items():
         print("Running ", distr_name)
         env = simpy.Environment()
         table = Table(env, Dice(distribution=distr))
         game_stats = GameStats(table)
+        # env.process(player_generator(env=env, table=table,
+        #                              arrival_dist=dg.Exponential(1 / st.minutes(15)),
+        #                              play_time_dist=dg.Flat(st.minutes(30), st.hours(2)),
+        #                              # play_time_dist=dg.Normal(st.hours(1.5), st.minutes(45), minimum=30.0),
+        #                              wait_time_dist=dg.Flat(st.minutes(2), st.minutes(15)),
+        #                              num_players=100))
         env.process(player_generator(env=env, table=table,
-                                     arrival_dist=dg.Exponential(1 / simminutes(10)),
-                                     play_time_dist=dg.Flat(simminutes(30), simhours(3)),
-                                     # play_time_dist=dg.Normal(simhours(1.5), simminutes(45), minimum=30.0),
-                                     wait_time_dist=dg.Flat(simminutes(2), simminutes(15)),
-                                     num_players=100))
-        env.run()
+                                     arrival_dist=dg.Exponential(1 / st.minutes(15)),
+                                     play_time_dist=dg.Flat(st.minutes(30), st.hours(2)),
+                                     # play_time_dist=dg.Normal(st.hours(1.5), st.minutes(45), minimum=30.0),
+                                     wait_time_dist=dg.Flat(st.minutes(2), st.minutes(15))))
+        env.run(st.days(3))
 
         directory = check_directory(distr_name)
         stats[distr_name] = game_stats.data()
-
+        bets[distr_name] = table.bets
         plot_rolls(table, directory)
         plot_stats(game_stats, directory)
+        plot_bets(bets[distr_name], directory)
 
     plot_all_stats(stats)
+    plot_payout(bets)
 
 
 def player_generator(env, table, arrival_dist, play_time_dist, wait_time_dist, num_players=None):
@@ -105,6 +115,27 @@ def plot_stats(game_stats, directory):
     plt.savefig(os.path.join(directory, 'game_stats.pdf'))
 
 
+def plot_bets(bets, directory):
+    keys = [bet.name for bet in bets]
+    hits = [bet.hit for bet in bets]
+    misses = [bet.miss for bet in bets]
+    expected = [bet.expected() for bet in bets]
+    x = range(len(keys))
+
+    fig, ax = plt.subplots()
+    p1 = ax.bar(x, hits, color='g')
+    p2 = ax.bar(x, misses, color='r', bottom=hits)
+    p3 = ax.plot(x, expected, 'bo', linestyle='None')
+    ax.set_xticks(x)
+    ax.set_xticklabels(keys, ha='right')
+
+    axlabels = ax.get_xticklabels()
+    plt.setp(axlabels, rotation=45)
+    plt.legend((p1, p2), ('Hits', 'Misses'))
+
+    plt.savefig(os.path.join(directory, 'bet_stats.png'), bbox_inches='tight')
+
+
 def plot_all_stats(stats):
     fig, axi = plt.subplots(2, int(math.ceil(len(stats) / 2)), sharey=True)
 
@@ -119,7 +150,7 @@ def plot_all_stats(stats):
     plt.xticks(rotation='vertical')
     # plt.margins(0.2)
 
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', '0.33', '0.66']
 
     plots = []
     current = 0
@@ -142,6 +173,49 @@ def plot_all_stats(stats):
 
     fig.legend(plots, stats.keys(), loc='lower right')
     plt.savefig('results/all_stats.png', bbox_inches='tight')
+
+
+def plot_payout(all_bets):
+    # fig, axi = plt.subplots(2, int(math.ceil(len(all_bets) / 2)), sharey=True)
+    fig, axi = plt.subplots(2, int(math.ceil(len(all_bets) / 2)))
+
+    axi[-1, -1].axis('off')
+
+    # fig.set_dpi(200)
+    fig.set_size_inches(10, 8)
+    fig.subplots_adjust(hspace=.5)
+    # fig.subplots_adjust(hspace=.75, wspace=.5)
+    # fig.tight_layout()
+
+    plt.xticks(rotation='vertical')
+    # plt.margins(0.2)
+
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', '0.33', '0.66']
+
+    plots = []
+    current = 0
+
+    for label, bets in all_bets.items():
+        ax = axi[0 if int(math.ceil(len(all_bets) / 2)) > current else 1][current % int(math.ceil(len(all_bets) / 2))]
+        current += 1
+        keys = [bet.name for bet in bets]
+        paid_out = [-bet.paid for bet in bets]
+        raked_in = [bet.raked for bet in bets]
+        expected_payout = [-bet.expected_payout() for bet in bets]
+        expected_rake = [bet.expected_rake() for bet in bets]
+
+        x = range(len(keys))
+
+        ax.bar(x, paid_out, color='r')
+        ax.bar(x, raked_in, color='g')
+        ax.plot(x, expected_payout, 'bo')
+        ax.plot(x, expected_rake, 'mo')
+        ax.set_xticks(x)
+        ax.set_xticklabels(keys, ha='right')
+        axlabels = ax.get_xticklabels()
+        plt.setp(axlabels, rotation=45)
+
+    plt.savefig('results/average_payouts.png', bbox_inches='tight')
 
 
 if __name__ == '__main__':
