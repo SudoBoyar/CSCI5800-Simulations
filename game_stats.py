@@ -15,13 +15,13 @@ class GameStats(object):
         while self.table.next_roll_event is not None:
             yield self.table.next_roll_event
 
-            roll = self.table.roll_event.value
+            roll, point = self.table.roll_event.value
 
             if roll is None:
                 continue
 
-            if self.table.has_point():
-                if roll == self.table.point:
+            if point is not None:
+                if roll == point:
                     self.points_hit += 1
                 elif roll == 7:
                     self.seven_out += 1
