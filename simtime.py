@@ -6,15 +6,19 @@ def seconds(n):
 
 
 def minutes(n):
-    return n * 60
+    return n * seconds(60)
 
 
 def hours(n):
-    return n * 60 * 60
+    return n * minutes(60)
 
 
 def days(n):
-    return n * 60 * 60 * 24
+    return n * hours(24)
+
+
+def years(n):
+    return n * days(365.25)
 
 
 def pretty_time(t):
