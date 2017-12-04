@@ -26,10 +26,10 @@ def bets(table):
         #  Prop bets - Always on
         ###
         # Hard Way Prop Bets
-        PropBet(table, 'Hard 4', Odds(8, 1), Payout(7, 1), [7, [2, 2]], [[1, 3]]),
-        PropBet(table, 'Hard 6', Odds(10, 1), Payout(9, 1), [7, [3, 3]], [[1, 5], [2, 4]]),
-        PropBet(table, 'Hard 8', Odds(10, 1), Payout(9, 1), [7, [4, 4]], [[3, 5], [2, 6]]),
-        PropBet(table, 'Hard 10', Odds(8, 1), Payout(7, 1), [7, [5, 5]], [[4, 6]]),
+        PropBet(table, 'Hard 4', Odds(8, 1), Payout(7, 1), [[2, 2]], [7, [1, 3]]),
+        PropBet(table, 'Hard 6', Odds(10, 1), Payout(9, 1), [[3, 3]], [7, [1, 5], [2, 4]]),
+        PropBet(table, 'Hard 8', Odds(10, 1), Payout(9, 1), [[4, 4]], [7, [3, 5], [2, 6]]),
+        PropBet(table, 'Hard 10', Odds(8, 1), Payout(7, 1), [[5, 5]], [7, [4, 6]]),
 
         # Single Roll Prop Bets
         SingleRoll(table, 'Snake Eyes', Odds(35, 1), Payout(30, 1), [2]),
