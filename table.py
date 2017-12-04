@@ -26,6 +26,7 @@ class Table(object):
         self.spots = simpy.Resource(env, capacity=capacity)
         self.players = [None for _ in range(capacity)]
         self.player_seats = {}
+        self.player_arrived_event = env.event()
 
         self.left_dealer = simpy.Resource(env, capacity=1)
         self.left_stack = simpy.Container(env, capacity=float('inf'))
@@ -44,9 +45,13 @@ class Table(object):
         self.right_players = []
 
         self.transfers = []
+        self.env.process(self.dummy_roll())
 
     def has_point(self):
         return self.point is not None
+
+    def is_full(self):
+        return self.spots.count() == self.capacity
 
     def table_accounting(self):
         while True:
@@ -71,13 +76,14 @@ class Table(object):
         self.player_seats[player.id] = seat
 
         if self.spots.count == 1:
-            self.env.process(self.dummy_roll())
+            self.player_arrived_event.succeed()
+            self.player_arrived_event = self.env.event()
 
     def remove_player(self, player):
         seat = self.player_seats.pop(player.id)
         self.players[seat] = None
 
-    def bet_request(self, player):
+    def dealer_request(self, player):
         if self.player_seats[player.id] < self.capacity/2:
             return self.left_dealer.request()
         elif self.capacity/2 <= self.player_seats[player.id] < self.capacity:
@@ -86,26 +92,24 @@ class Table(object):
             raise RuntimeError('Player sat at nonexistent seat')
 
     def dummy_roll(self):
-        while self.spots.count > 0:
+        while True:
+            if self.spots.count == 0:
+                yield self.player_arrived_event
+
+            # Payouts, place bets, etc.
             yield self.env.timeout(st.seconds(30))
+
             roll = self.dice.roll()
+            self.roll_event = self.next_roll_event
+            self.next_roll_event = self.env.event()
+            self.roll_event.succeed((roll, self.point))
 
-            if self.spots.count > 0:
-                # double check just in case the last player left
-                self.roll_event = self.next_roll_event
-                self.next_roll_event = self.env.event()
-                self.roll_event.succeed(roll)
-
-                # We have to yield here to make sure the event actually gets processed before doing game status updates
-                # TODO Rewrite so not necessary?
-                yield self.env.timeout(0)
-
-                if self.has_point():
-                    if roll == 7 or roll == self.point:
-                        self.point = None
-                elif not self.has_point():
-                    if roll in [4, 5, 6, 8, 9, 10]:
-                        self.point = roll.total
+            if self.has_point():
+                if roll == 7 or roll == self.point:
+                    self.point = None
+            elif not self.has_point():
+                if roll in [4, 5, 6, 8, 9, 10]:
+                    self.point = roll.total
 
         self.roll_event = self.next_roll_event
         self.next_roll_event = None
